@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interest-Based Video Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-r from-cyan-500 to-blue-500 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Main Content -->
+        <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
+            <!-- Header -->
+            <div class="p-8">
+                <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold">Video Chat Matcher</div>
+                <h1 class="mt-2 text-xl font-bold">Find Chat Partners with Similar Interests</h1>
+            </div>
+
+            <!-- Interest Form -->
+            <div id="interestForm" class="p-8 border-t">
+                <form id="userInterests" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">What are your interests?</label>
+                        <input type="text" id="interests" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="e.g., coding, music, gaming" required>
+                    </div>
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Find Match
+                    </button>
+                </form>
+            </div>
+
+            <!-- Video Chat Container (Initially Hidden) -->
+            <div id="videoChat" class="hidden p-8 border-t">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <video id="localVideo" autoplay muted playsinline class="w-full rounded-lg bg-gray-200"></video>
+                        <span class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">You</span>
+                    </div>
+                    <div class="relative">
+                        <video id="remoteVideo" autoplay playsinline class="w-full rounded-lg bg-gray-200"></video>
+                        <span class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">Partner</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-center space-x-4">
+                    <button id="muteAudio" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300">
+                        <i class="bi bi-mic-fill text-xl"></i>
+                    </button>
+                    <button id="muteVideo" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300">
+                        <i class="bi bi-camera-video-fill text-xl"></i>
+                    </button>
+                    <button id="endCall" class="p-2 rounded-full bg-red-500 hover:bg-red-600 text-white">
+                        <i class="bi bi-telephone-x-fill text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="hidden p-8 text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Finding someone with similar interests...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('userInterests').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const interests = document.getElementById('interests').value;
+            
+            // Show loading state
+            document.getElementById('interestForm').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            // Simulating API call to backend (In reality, this would connect to your PostgreSQL database)
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('videoChat').classList.remove('hidden');
+                initializeVideoChat();
+            }, 2000);
+        });
+
+        async function initializeVideoChat() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const localVideo = document.getElementById('localVideo');
+                localVideo.srcObject = stream;
+
+                // Handle mute controls
+                let isAudioMuted = false;
+                let isVideoMuted = false;
+
+                document.getElementById('muteAudio').onclick = () => {
+                    isAudioMuted = !isAudioMuted;
+                    stream.getAudioTracks().forEach(track => track.enabled = !isAudioMuted);
+                    document.getElementById('muteAudio').innerHTML = isAudioMuted ? 
+                        '<i class="bi bi-mic-mute-fill text-xl"></i>' : 
+                        '<i class="bi bi-mic-fill text-xl"></i>';
+                };
+
+                document.getElementById('muteVideo').onclick = () => {
+                    isVideoMuted = !isVideoMuted;
+                    stream.getVideoTracks().forEach(track => track.enabled = !isVideoMuted);
+                    document.getElementById('muteVideo').innerHTML = isVideoMuted ? 
+                        '<i class="bi bi-camera-video-off-fill text-xl"></i>' : 
+                        '<i class="bi bi-camera-video-fill text-xl"></i>';
+                };
+
+                document.getElementById('endCall').onclick = () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    document.getElementById('videoChat').classList.add('hidden');
+                    document.getElementById('interestForm').classList.remove('hidden');
+                };
+
+            } catch (err) {
+                console.error('Error accessing media devices:', err);
+                alert('Unable to access camera and microphone. Please ensure you have granted the necessary permissions.');
+            }
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
